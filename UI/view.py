@@ -73,7 +73,9 @@ class View:
             ft.Divider(),
 
             # Implementare la parte di ricerca del cammino minimo
-            # TODO
+
+            row3,
+            self.lista_visualizzazione_3,
         )
 
         self.page.scroll = "adaptive"

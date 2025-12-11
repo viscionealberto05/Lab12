@@ -49,5 +49,5 @@ class Controller:
 
     """Implementare la parte di ricerca del cammino minimo"""
     def handle_cammino_minimo(self, e):
-        pass
+        self._model.cammino_minimo()
 
