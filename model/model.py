@@ -298,7 +298,7 @@ class Model:
                 print(diz_ordinato[key])
                 break"""
 
-            percorso_minimo_assoluto = None
+
 
             for nodo_sorgente, validi in percorsi_minimi.items():
                 # ordina validi per costo crescente (secondo elemento della tupla)
@@ -306,6 +306,32 @@ class Model:
                 percorsi_minimi[nodo_sorgente] = validi_ordinati
 
             for key in percorsi_minimi:
-                print(percorsi_minimi[key])
-                break
+                print(f"{key} ha {percorsi_minimi[key]}")
 
+            min_costo = float("inf")
+
+            for sorgente, validi in percorsi_minimi.items():
+                for dest, (path, costo) in validi.items():
+                    if costo < min_costo:
+                        min_costo = costo
+
+            percorsi_minimi_assoluti = []
+
+            for sorgente, validi in percorsi_minimi.items():
+                for dest, (path, costo) in validi.items():
+                    if costo == min_costo:
+                        percorsi_minimi_assoluti.append([sorgente, dest, path, costo])
+
+            print(f"Costo minimo assoluto: {min_costo}")
+            for sorgente, dest, path, costo in percorsi_minimi_assoluti:
+                print(f"Sorgente: {sorgente}, Destinazione: {dest}, Percorso: {path}, Costo: {costo}")
+
+
+            for i in range(len(percorsi_minimi_assoluti)):
+                for rifugio in self.lista_nodi:
+                    if rifugio.id == percorsi_minimi_assoluti[i][0]:
+                        percorsi_minimi_assoluti[i][0] = rifugio
+                    if rifugio.id == percorsi_minimi_assoluti[i][1]:
+                        percorsi_minimi_assoluti[i][1] = rifugio
+
+            return percorsi_minimi_assoluti
