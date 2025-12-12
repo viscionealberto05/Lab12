@@ -1,4 +1,5 @@
 import networkx as nx
+from operator import itemgetter
 from database.dao import DAO
 
 class Model:
@@ -42,11 +43,11 @@ class Model:
         massimo = -1000
 
         for edge in self.G.edges(data=True):
-            if edge[2]["weight"] <= minimo:
+            if edge[2]["weight"] < minimo:
                 minimo = edge[2]["weight"]
 
         for edge in self.G.edges(data=True):
-            if edge[2]["weight"] >= massimo:
+            if edge[2]["weight"] > massimo:
                 massimo = edge[2]["weight"]
 
         return round(minimo,2), round(massimo,2)
@@ -64,9 +65,9 @@ class Model:
         self._soglia = soglia
 
         for edge in self.G.edges(data=True):
-            if edge[2]["weight"] <= soglia:
+            if edge[2]["weight"] < soglia:
                 lista_minori.append(round(edge[2]["weight"],2))
-            else:
+            elif edge[2]["weight"] > soglia:
                 lista_maggiori.append(round(edge[2]["weight"],2))
 
         return len(lista_minori), len(lista_maggiori)
@@ -215,35 +216,96 @@ class Model:
 
     def cammino_minimo(self):
 
-        percorsi = {}
+        #Provo ad appoggiarmi ad un algoritmo AP-SP, per ricercare il percorso minimo
+        #cioè più corto (rispettando le indicazioni dell'esercizio) tra qualunque paio di vertici
 
-        def peso_filtrato(u, v, d):
-            w = d["weight"]
-            return w if w > self._soglia else float("inf")
+        #deve venirmi restuito sia il peso complessivo del percorso minimo, che la sequenza di nodi
 
-        for sorgente in self.G.nodes():
+        #ciascun arco all'interno del potenziale percorso con peso minimo deve avere peso superiore alla soglia
+        #considero solo i percorsi che hanno almeno 3 nodi
 
-            # Percorsi pesati ignorando archi <= soglia
-            cammini = nx.single_source_dijkstra_path(
-                self.G,
-                sorgente,
-                weight=peso_filtrato
-            )
 
-            # filtro cammini con almeno 2 archi (≥ 3 nodi)
-            validi = {
-                dest: path
-                for dest, path in cammini.items()
-                if len(path) >= 3
-            }
 
-            if validi:
-                percorsi[sorgente] = validi
+            percorsi_minimi = {}  # dizionario finale: sorgente → destinazione → percorso
 
-        print("Soglia:", self._soglia)
-        for s, paths in percorsi.items():
-            print(f"Sorgente {s}:")
-            for dest, path in paths.items():
-                print(" ->", dest, path)
+            # Funzione peso che filtra gli archi così che l'algoritmo possa escludere i percorsi che li contengono
 
+            for edge in self.G.edges(data=True):
+                if edge[2]["weight"] <= self._soglia:
+                    edge[2]["weight"] = float("inf")
+
+
+
+            # Eseguo Dijkstra da ogni nodo
+            for nodo_sorgente in self.G.nodes():
+
+                # Questo dà il dizionario di cammini minimi verso ciascun nodo raggiungibile, il nodo di destinazione è la chiave
+                #il valore è una lista di tutti i nodi attraversati
+                cammini = nx.single_source_dijkstra_path(
+                    self.G, nodo_sorgente, weight="weight"
+                )
+
+                # Questo dà il dizionario che ha per chiave il nodo di destinazione e per valore il costo del cammino
+                costo_cammino = nx.single_source_dijkstra_path_length(
+                    self.G, nodo_sorgente, weight="weight"
+                )
+
+                validi = {}
+
+                for destinazione, path in cammini.items():
+
+                    # Deve contenere almeno 3 nodi
+                    if len(path) < 3:
+                        continue
+
+                    # Costo deve essere finito (cioè il cammino non passa da archi sotto soglia)
+                    costo = costo_cammino[destinazione]
+                    if costo == float("inf"):
+                        continue
+
+                    # Salvo il cammino valido
+                    validi[destinazione] = (path, costo)
+
+
+                if len(validi.keys()) != 0:
+                    percorsi_minimi[nodo_sorgente] = validi
+
+
+
+
+
+
+
+                """for destinazione, costo in costo_cammino.items():
+
+                    # filtro: cammino troppo corto
+                    if len(path) >= 3 and costo_cammino[destinazione] != float("inf"):
+
+                        validi[destinazione] = {
+                            "percorso": path,
+                            "peso_totale": costo_cammino[destinazione]
+                        }"""
+
+
+
+            # stampa risultati
+            #for sorgente in percorsi_minimi:
+            #    print(percorsi_minimi[sorgente])
+
+
+            """diz_ordinato = dict(sorted(percorsi_minimi.items(), key=lambda item: item[1][1]))
+            for key in diz_ordinato:
+                print(diz_ordinato[key])
+                break"""
+
+            percorso_minimo_assoluto = None
+
+            for nodo_sorgente, validi in percorsi_minimi.items():
+                # ordina validi per costo crescente (secondo elemento della tupla)
+                validi_ordinati = dict(sorted(validi.items(), key=lambda item: item[1][1]))
+                percorsi_minimi[nodo_sorgente] = validi_ordinati
+
+            for key in percorsi_minimi:
+                print(percorsi_minimi[key])
+                break
 
