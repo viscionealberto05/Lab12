@@ -72,147 +72,6 @@ class Model:
 
         return len(lista_minori), len(lista_maggiori)
 
-    """Implementare la parte di ricerca del cammino minimo"""
-    # TODO
-
-    """def cammino_minimo(self):
-        #lista_nodi = []
-
-        #for nodo in self.G.nodes():
-        #    for nodo_vicino in self.G.neighbors(nodo):
-
-        percorsi=[]
-
-        best_overall_path = None
-        best_overall_weight = float('inf')
-
-        for start_node in self.G.nodes():
-            path, weight = self.cammino_minimo_con_vincoli(self.G, start_node, self._soglia)
-            if path is not None and weight < best_overall_weight:
-                best_overall_path = path
-                best_overall_weight = weight
-
-        print("Percorso minimo globale:", best_overall_path)
-        print("Peso:", best_overall_weight)
-
-    def cammino_minimo_con_vincoli(self, G, start, soglia):
-        best_path = None
-        best_weight = float('inf')
-
-        def dfs(current, path, weight):
-            nonlocal best_path, best_weight
-
-            # pruning: già peggio del migliore
-            if weight > best_weight:
-                return
-
-            # se soddisfa i due vincoli → candidato
-            if weight > soglia and len(path) >= 3:
-                if weight < best_weight:
-                    best_weight = weight
-                    best_path = path.copy()
-
-            # esplora i vicini
-            for neighbor in G.neighbors(current):
-                if neighbor not in path:  # evita cicli
-                    edge_weight = G[current][neighbor]['weight']
-                    dfs(neighbor, path + [neighbor], weight + edge_weight)
-
-        dfs(start, [start], 0)
-        return best_path, best_weight"""
-
-    """def cammino_minimo(self):
-
-        percorso_minimo = None
-        self.percorsi = []
-
-        for nodo in self.G.nodes():
-            self.nodi_visti = []
-            percorso = self.dfs(nodo,self.nodi_visti)
-            if len(self.percorsi) != 0:
-                for perc in self.percorsi:
-                    if sorted(percorso["rifugi"]) == perc["rifugi"] and percorso["peso"] < perc["peso"]:
-                        perc["rifugi"] = percorso["rifugi"]
-            else:
-                self.percorsi.append(percorso)
-
-        print(self.percorsi)
-
-
-
-    def dfs(self, nodo, nodi_visti):
-        peso_percorso = 0
-        for nodo_vicino in self.G.neighbors(nodo):
-            if nodo_vicino in nodi_visti:
-                pass
-            else:
-                for edge in self.G.edges(data=True):
-                    if edge[0] == nodo and edge[1] == nodo_vicino:
-                        peso_percorso += edge[2]["weight"]
-                        nodi_visti.append(nodo_vicino)
-                        self.dfs(nodo_vicino, nodi_visti)
-
-        return {"rifugi":self.nodi_visti,"peso":peso_percorso}"""
-
-    """def cammino_minimo(self):
-        percorsi_validi = []
-        soglia = self._soglia
-        G = self.G
-
-        def dfs(nodo_corrente, percorso_attuale, peso_attuale):
-            for vicino in G.neighbors(nodo_corrente):
-                if vicino not in percorso_attuale:
-                    peso_arco = G[nodo_corrente][vicino]["weight"]
-
-                    # Considera solo archi con peso >= soglia
-                    if peso_arco >= soglia:
-                        nuovo_percorso = percorso_attuale + [vicino]
-                        nuovo_peso = peso_attuale + peso_arco
-
-                        # Se ha almeno 2 archi (3 nodi), salva il percorso
-                        if len(nuovo_percorso) >= 3:
-                            percorsi_validi.append((nuovo_percorso, nuovo_peso))
-
-                        # Continua DFS ricorsiva
-                        dfs(vicino, nuovo_percorso, nuovo_peso)
-
-        # Chiama DFS da ogni nodo di partenza
-        for nodo in G.nodes():
-            dfs(nodo, [nodo], 0)
-
-        print(percorsi_validi)"""
-
-    """def cammino_minimo(self):
-
-        percorsi = []
-        for nodo in self.G.nodes():
-            percorso = {}
-            edges = nx.bfs_edges(self.G,nodo)
-            visited_nodes = []
-            for u,v in edges:
-                peso = self.G[u][v].get("weight")
-
-                visited_nodes.append((v,peso))
-
-            #while len(visited_nodes) > 0:
-
-
-            if len(visited_nodes) >=3:
-                for arco in visited_nodes:
-                    flag = False
-                    if arco[1] < self._soglia:
-                        flag = True
-                        break
-
-                if flag == False:
-                    percorso[nodo] = (visited_nodes)
-                    percorsi.append(percorso)
-
-            #FLAG che
-
-        print(self._soglia)
-        for percorso in percorsi:
-            print(percorso)"""
 
     def cammino_minimo(self):
 
@@ -237,6 +96,7 @@ class Model:
 
 
             # Eseguo Dijkstra da ogni nodo
+
             for nodo_sorgente in self.G.nodes():
 
                 # Questo dà il dizionario di cammini minimi verso ciascun nodo raggiungibile, il nodo di destinazione è la chiave
@@ -252,13 +112,22 @@ class Model:
 
                 validi = {}
 
+                #Una volta ottenuti i cammini minimi del singolo nodo, vado ad escludere quelli
+                #con meno di 3 nodi e che hanno archi sottosoglia (la cui distanza è stata volutamente posta a inf
+                #nella scrematura iniziale prima del Dijkstra)
+
+                #Creo quindi un dizionario "validi", ne esiste uno per ogni nodo sorgente, la chiave sarà la
+                #destinazione del percorso minimo, il valore sarà una tupla composta da due elementi:
+                # 0. lista di nodi attraversati per raggiungere la destinazione, recuperato dal dizionario "cammini" output del dijkstra per il singolo nodo
+                # 1. costo (o peso) complessivo del percorso per quella specifica destinazione, ottenuto dal dizionario "costo_cammino" output del dijkstra, con chiave la destinazione stessa
+
                 for destinazione, path in cammini.items():
 
                     # Deve contenere almeno 3 nodi
                     if len(path) < 3:
                         continue
 
-                    # Costo deve essere finito (cioè il cammino non passa da archi sotto soglia)
+                    # Il costo deve essere finito (cioè il cammino non passa da archi sotto soglia)
                     costo = costo_cammino[destinazione]
                     if costo == float("inf"):
                         continue
@@ -266,47 +135,37 @@ class Model:
                     # Salvo il cammino valido
                     validi[destinazione] = (path, costo)
 
+                #Prima di uscire dal ciclo for che itera sui nodi come sorgenti, mi accerto che ci sia almeno una destinazione
+                #valida (con annesso percorso e costo) per il singolo nodo, se il controllo viene superato allora associo, nel
+                #dizionario "percorsi_minimi", alla chiave "nodo_sorgente", il dizionario "validi", all'interno del quale
+                #sono contenuti come chiavi tutti i nodi raggiungibili e come valori tutte tuple contenenti lista dei percorsi
+                #e costo complessivo
+
+                #STRUTTURA:
+                #{ nodo_sorgente_1 : { nodo_dest_1 : ( [ np1,np2,... ], $$ ), nodo_dest_2 : ([],$),...} , nodo_sorgente_2 : { nd : ([],$), ... }, ... }
 
                 if len(validi.keys()) != 0:
                     percorsi_minimi[nodo_sorgente] = validi
 
-
-
-
-
-
-
-                """for destinazione, costo in costo_cammino.items():
-
-                    # filtro: cammino troppo corto
-                    if len(path) >= 3 and costo_cammino[destinazione] != float("inf"):
-
-                        validi[destinazione] = {
-                            "percorso": path,
-                            "peso_totale": costo_cammino[destinazione]
-                        }"""
-
-
-
-            # stampa risultati
-            #for sorgente in percorsi_minimi:
-            #    print(percorsi_minimi[sorgente])
-
-
-            """diz_ordinato = dict(sorted(percorsi_minimi.items(), key=lambda item: item[1][1]))
-            for key in diz_ordinato:
-                print(diz_ordinato[key])
-                break"""
-
-
+            #Una volta uscito dal ciclo for ho una struttura dati con tutti i percorsi minimi che soddisfano i vincoli
+            #richiesti dall'esercizio per ciascun nodo sorgente
 
             for nodo_sorgente, validi in percorsi_minimi.items():
                 # ordina validi per costo crescente (secondo elemento della tupla)
                 validi_ordinati = dict(sorted(validi.items(), key=lambda item: item[1][1]))
+                #item[1][1] indica che all'interno di "validi.items" considero il valore (non la chiave), e siccome questo valore è una tupla, il secondo elemento di questa (il costo/peso)
+
+                #cambio dunque i valori assegnati alle chiavi nel dizionario di partenza
                 percorsi_minimi[nodo_sorgente] = validi_ordinati
 
             for key in percorsi_minimi:
                 print(f"{key} ha {percorsi_minimi[key]}")
+
+            #Costruisco ora un algoritmo in grado di trovare tra tutti i percorsi minimi dei miei nodi sorgente, quello
+            #che in assoluto abbia costo minore (possono essere più di uno con lo stesso costo)
+
+            #Inizializzo una variabile per il costo minimo, che verrà costantemente aggiornata finchè non si troverà il percorso che tra tutti
+            #avrà il costo più basso in assoluto
 
             min_costo = float("inf")
 
@@ -326,12 +185,29 @@ class Model:
             for sorgente, dest, path, costo in percorsi_minimi_assoluti:
                 print(f"Sorgente: {sorgente}, Destinazione: {dest}, Percorso: {path}, Costo: {costo}")
 
+            #Rimuovo i percorsi duplicati
+            percorsi_minimi_non_duplicati = []
+            for sorgente, dest, path, costo in percorsi_minimi_assoluti:
+                for sorgente2, dest2, path2, costo2 in percorsi_minimi_assoluti:
 
-            for i in range(len(percorsi_minimi_assoluti)):
+                    #se osservo che la partenza di un percorso coincide con la destinazione dell'altro allora
+                    #vado direttamente al percorso successivo perchè ho un duplicato
+
+                    if sorgente == dest2:
+                        break
+                    else:
+                        percorsi_minimi_non_duplicati.append([sorgente, dest, path, costo])
+
+
+
+            for i in range(len(percorsi_minimi_non_duplicati)):
                 for rifugio in self.lista_nodi:
                     if rifugio.id == percorsi_minimi_assoluti[i][0]:
                         percorsi_minimi_assoluti[i][0] = rifugio
                     if rifugio.id == percorsi_minimi_assoluti[i][1]:
                         percorsi_minimi_assoluti[i][1] = rifugio
 
-            return percorsi_minimi_assoluti
+            return percorsi_minimi_non_duplicati
+
+    def cammino_minimo_recursive(self):
+        pass
