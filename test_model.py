@@ -2,7 +2,9 @@ from model.model import Model
 
 model = Model()
 
-model.build_weighted_graph(2020)
-print(model.lista_nodi)
-min, max = model.get_edges_weight_min_max()
-print(min, max)
+model.build_weighted_graph(2000)
+model.count_edges_by_threshold(4)
+
+model.cammino_minimo_recursive()
+print("ricorsione")
+print(model.cammino_minimo_recursive())

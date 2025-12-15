@@ -210,4 +210,76 @@ class Model:
             return percorsi_minimi_non_duplicati
 
     def cammino_minimo_recursive(self):
-        pass
+
+            self.best_cost = float("inf")
+            self.best_result = None
+
+            # best_result = (sorgente, destinazione, path, costo)
+
+            # lancio DFS da ogni nodo come sorgente
+            for nodo in self.G.nodes():
+                self.dfs_rec(
+                    nodo_corrente=nodo,
+                    sorgente=nodo,
+                    visitati={nodo},
+                    path=[nodo],
+                    costo=0
+                )
+
+            # se non trovato alcun cammino valido
+            if self.best_result is None:
+                return []
+
+            # conversione ID → oggetti rifugio
+            sorgente_id, dest_id, path_ids, costo = self.best_result
+
+            path_rifugi = []
+            for nodo_id in path_ids:
+                for rifugio in self.lista_nodi:
+                    if rifugio.id == nodo_id:
+                        path_rifugi.append(rifugio)
+                        break
+
+            return [
+                sorgente_id,
+                dest_id,
+                path_rifugi,
+                costo
+            ]
+
+    def dfs_rec(self,nodo_corrente, sorgente, visitati, path, costo):
+
+        # se il cammino ha almeno 2 archi (>= 3 nodi)
+        if len(path) >= 3:
+            if costo < self.best_cost:
+                self.best_cost = costo
+                self.best_result = (
+                    sorgente,  # nodo di partenza
+                    nodo_corrente,  # nodo di arrivo
+                    path.copy(),  # sequenza nodi
+                    costo  # costo totale
+                )
+
+        for vicino in self.G.neighbors(nodo_corrente):
+
+            if vicino in visitati:
+                continue
+
+            peso = self.G[nodo_corrente][vicino]["weight"]
+
+            # vincolo sulla soglia
+            if peso <= self._soglia:
+                continue
+
+            # filtro sul peso eccessivo
+            if costo + peso >= self.best_cost:
+                continue
+
+            visitati.add(vicino)
+            path.append(vicino)
+
+            self.dfs_rec(vicino, sorgente, visitati, path, costo + peso)
+
+            # backtracking
+            path.pop()
+            visitati.remove(vicino)
